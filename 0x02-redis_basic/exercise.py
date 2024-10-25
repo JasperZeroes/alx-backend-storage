@@ -99,3 +99,31 @@ class Cache:
     def get_int(self, value: str) -> int:
         """ get an int """
         return self.get(self._key, int)
+
+def replay(func: Callable):
+    """
+    Display the history of calls of a particular function.
+    
+    Args:
+        func (Callable): The function whose history is to be replayed.
+    """
+    # Initialize Redis client
+    redis_client = redis.Redis()
+
+    # Retrieve the qualified name of the function
+    func_name = func.__qualname__
+
+    # Keys for inputs and outputs
+    input_key = f"{func_name}:inputs"
+    output_key = f"{func_name}:outputs"
+
+    # Fetch input and output lists from Redis
+    inputs = redis_client.lrange(input_key, 0, -1)
+    outputs = redis_client.lrange(output_key, 0, -1)
+
+    # Number of times the function was called
+    print(f"{func_name} was called {len(inputs)} times:")
+
+    # Loop over each input/output pair and display them
+    for inp, out in zip(inputs, outputs):
+        print(f"{func_name}(*{inp.decode('utf-8')}) -> {out.decode('utf-8')}")
